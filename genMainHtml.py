@@ -4,85 +4,77 @@ import os
 # Load the data from the CSV file
 model_data = pd.read_csv("data/keywords.csv")
 
-# Sort by Rating (descending) and PublishYear (descending)
-rating_ranking = model_data[['Name', 'Rating', 'Id']].sort_values(by='Rating', ascending=False)
-publish_year_ranking = model_data[['Name', 'PublishYear', 'Id']].sort_values(by='PublishYear', ascending=False)
+model_data['html_path'] = ''
+# Create the output directory if it doesn't exist
+output_dir = "page"
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
 
-# Create the HTML content
-html_content = f"""
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Book Rankings</title>
-    <style>
-        body {{ font-family: Arial, sans-serif; margin: 20px; }}
-        h1 {{ color: #333; }}
-        .rankings {{ display: flex; justify-content: space-between; }}
-        .ranking {{ width: 45%; }}
-        table {{ border-collapse: collapse; width: 100%; }}
-        th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
-        th {{ background-color: #f2f2f2; }}
-    </style>
-</head>
-<body>
-    <h1>Book Rankings</h1>
+# Generate HTML files for each book
+for index, row in model_data.iterrows():
+    book_id = row['Id']
+    name = row['Name']
+    authors = row['Authors']
+    publish_year = row['PublishYear']
+    publisher = row['Publisher']
+    description = row['Description']
+    rating = row['Rating']
+    recommended_ids = eval(row['recommended_ids'])  # Convert string representation of list to actual list
+    image_path = f"../{row['image_path']}"
 
-    <div class="rankings">
-        <div class="ranking">
-            <h2>Rating Ranking</h2>
-            <table>
-                <tr>
-                    <th>Book Name</th>
-                    <th>Rating</th>
-                </tr>
-"""
+    # Create HTML content
+    recommended_books = ''.join(
+        [f'<div style="margin: 5px;">'
+         f'<a href="{id}.html">'  # Add hyperlink here
+         f'<img src="../cover/{id}.png" alt="Book Cover" style="width:100px;height:150px;margin:5px; border: 1px solid gray;">'
+         f'</a>'
+         f'<p>{model_data.loc[model_data["Id"] == id, "Name"].values[0]}</p>'
+         f'</div>' for id in recommended_ids]
+    )
 
-# Add Rating Ranking data to HTML with hyperlinks
-for index, row in rating_ranking.iterrows():
-    book_link = f'<a href="page/{row["Id"]}.html">{row["Name"]}</a>'
-    html_content += f"""
-                <tr>
-                    <td>{book_link}</td>
-                    <td>{row['Rating']}</td>
-                </tr>
-"""
-
-html_content += """
-            </table>
+    html_content = f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{name}</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; margin: 20px; }}
+            h1 {{ color: #333; }}
+            .book-info {{ display: flex; align-items: flex-start; margin-bottom: 20px; }}
+            .book-details {{ flex: 1; }}
+            .book-cover {{ margin-left: 20px; }}
+            .recommended {{ margin-top: 40px; }}
+            .recommended img {{ width: 100px; height: 150px; border: 1px solid gray; margin: 5px; }}
+        </style>
+    </head>
+    <body>
+        <div class="book-info">
+            <div class="book-details">
+                <h1>{name}</h1>
+                <p><strong>Authors:</strong> {authors}</p>
+                <p><strong>Publish Year:</strong> {publish_year}</p>
+                <p><strong>Publisher:</strong> {publisher}</p>
+                <p><strong>Rating:</strong> {rating}</p>
+                <p><strong>Description:</strong> {description}</p>
+            </div>
+            <div class="book-cover">
+                <img src="{image_path}" alt="{name} Cover" style="width:200px;height:300px; border: 1px solid gray;">
+            </div>
         </div>
-
-        <div class="ranking">
-            <h2>Publish Year Ranking</h2>
-            <table>
-                <tr>
-                    <th>Book Name</th>
-                    <th>Publish Year</th>
-                </tr>
-"""
-
-# Add Publish Year Ranking data to HTML with hyperlinks
-for index, row in publish_year_ranking.iterrows():
-    book_link = f'<a href="page/{row["Id"]}.html">{row["Name"]}</a>'
-    html_content += f"""
-                <tr>
-                    <td>{book_link}</td>
-                    <td>{row['PublishYear']}</td>
-                </tr>
-"""
-
-html_content += """
-            </table>
+        <div class="recommended">
+            <h2>Recommended Books:</h2>
+            {recommended_books}
         </div>
-    </div>
-</body>
-</html>
-"""
+    </body>
+    </html>
+    """
 
-# Save the HTML content to a file
-output_file_path = "index.html"
-with open(output_file_path, "w", encoding="utf-8") as file:
-    file.write(html_content)
+    # Save the HTML content to a file
+    html_file_path = os.path.join(output_dir, f"{book_id}.html")
+    model_data.at[index, 'html_path'] = html_file_path
+    with open(html_file_path, "w", encoding="utf-8") as file:
+        file.write(html_content)
 
-print(f"Generated main page: {output_file_path}")
+    print(f"Generated HTML file: {html_file_path}")
