@@ -2,7 +2,7 @@ import pandas as pd
 import os
 
 # Load the data from the CSV file
-model_data = pd.read_csv("data/keywords_final.csv")
+model_data = pd.read_csv("data/keywords_last_with_renamed_images.csv")
 
 model_data['html_path'] = ''
 # Create the output directory if it doesn't exist
@@ -26,7 +26,7 @@ for index, row in model_data.iterrows():
     recommended_books = ''.join(
         [f'<div style="margin: 5px;">'
          f'<a href="{id}.html">'  # Add hyperlink here
-         f'<img src="../cover/{id}.png" alt="Book Cover" style="width:100px;height:150px;margin:5px; border: 1px solid gray;">'
+         f'<img src="../cover/{id}.jpg" alt="Book Cover" style="width:100px;height:150px;margin:5px; border: 1px solid gray;">'
          f'</a>'
          f'<p>{model_data.loc[model_data["Id"] == id, "Name"].values[0]}</p>'
          f'</div>' for id in recommended_ids]
